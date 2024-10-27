@@ -30,11 +30,8 @@ const googleModels = [
 
 const systemPrompt = "You are an AI assistant specialized in creating websites based on user descriptions. Your task is to generate clean, valid HTML, CSS, and JavaScript code for a website. Respond only with the code needed to create the website, without any explanations or markdown formatting. The code should be ready to be rendered directly in a browser.";
 
-async function generateWebsiteCode(provider, model, prompt, images = []) {
-  if (provider === 'google') {
-    return generateGoogleWebsiteCode(model, prompt, images);
-  }
-  throw new Error('Invalid provider');
+async function generateWebsiteCode(model, prompt, images = []) {
+  return generateGoogleWebsiteCode(model, prompt, images);
 }
 
 async function generateGoogleWebsiteCode(model, prompt, images = []) {
@@ -81,7 +78,7 @@ async function generateGoogleWebsiteCode(model, prompt, images = []) {
       },
       {
         role: "model", 
-        parts: [{text: "Understood. I will provide the website code based on user description and images. I'll provide clean, valid HTML, CSS, and JavaScript code without any explanations or markdown formatting. I will make sure <style> and <script> part comes within inside the <html>."}]
+        parts: [{text: "Understood. I will provide the website code based on user description and images. I'll provide clean, valid HTML, CSS, and JavaScript code without any explanations or markdown formatting. I will make sure <style> and <script> part comes inside the <html>."}]
       },
       {
         role: "user",
@@ -103,22 +100,22 @@ function encodeImageToBase64(buffer) {
 }
 
 app.post('/generate', upload.array('images', 5), async (req, res) => {
-  const { prompt, provider, model } = req.body;
+  const { prompt, model } = req.body;
   const images = req.files ? req.files.map(file => encodeImageToBase64(file.buffer)) : [];
-  handleWebsiteGeneration(req, res, prompt, provider, model, images);
+  handleWebsiteGeneration(req, res, prompt, model, images);
 });
 
 app.post('/modify', upload.array('images', 5), async (req, res) => {
-  const { prompt, currentCode, provider, model } = req.body;
+  const { prompt, currentCode, model } = req.body;
   const images = req.files ? req.files.map(file => encodeImageToBase64(file.buffer)) : [];
   const modifyPrompt = `Modify the following website code based on this instruction and the provided images: ${prompt}\n\nCurrent code:\n${currentCode}`;
-  handleWebsiteGeneration(req, res, modifyPrompt, provider, model, images);
+  handleWebsiteGeneration(req, res, modifyPrompt, model, images);
 });
 
 const isServerless = process.env.VERCEL == '1';
 
-async function handleWebsiteGeneration(req, res, prompt, provider, model, images = []) {
-  if (isServerless){
+async function handleWebsiteGeneration(req, res, prompt, model, images = []) {
+  if (isServerless) {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -131,7 +128,8 @@ async function handleWebsiteGeneration(req, res, prompt, provider, model, images
   }
 
   try {
-    const stream = await generateWebsiteCode(provider, model, prompt, images);
+    const stream = await generateWebsiteCode(model, prompt, images);
+
     for await (const chunk of stream) {
       const chunkText = chunk.text();
       res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
@@ -147,7 +145,7 @@ async function handleWebsiteGeneration(req, res, prompt, provider, model, images
 
 app.get('/models', (req, res) => {
   res.json({
-    google: googleModels
+    google: googleModels,
   });
 });
 
