@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiteSynth</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="input-section">
+            <div class="provider-selection">
+                <h2>SiteSynth - AI site builder</h2>
+                <br>
+                <br>
+                <select id="provider-select">
+                    <option value="google">Google</option>
+                </select>
+                <select id="model-select"></select>
+            </div>
+            <div class="description-box">
+                <h2>WEBSITE DESCRIPTION</h2>
+                <textarea id="ai-prompt" placeholder="Enter your website description here..."></textarea>
+                <div class="image-upload-section">
+                    <div class="image-upload-container">
+                        <label for="reference-images" class="image-upload-label">
+                            Attach images for references...
+                            <input 
+                                type="file" 
+                                id="reference-images" 
+                                accept="image/*" 
+                                class="image-upload-input"
+                                data-provider-support="google"
+                                multiple
+                            >
+                        </label>
+                        <div id="images-preview-container" class="images-grid hidden">
+                            <!-- Image previews will be dynamically added here -->
+                        </div>
+                        <p id="image-status" class="image-status"></p>
+                    </div>
+                </div>
+                <button id="generate-btn">Generate Website</button>
+            </div>
+            
+            <div class="modify-box">
+                <h2>MODIFY WEBSITE</h2>
+                <textarea id="modify-prompt" placeholder="Enter modifications here..."></textarea>
+                <button id="modify-btn">Modify Website</button>
+            </div>
+            <div class="download-box">
+                <button id="download-btn">Download Website</button>
+            </div>
+        
+        </div>
+        <div class="preview-section">
+            <div class="preview-header">
+                <h2>LIVE PREVIEW</h2>
+                <div class="view-controls">
+                    <div class="view-toggle">
+                        <button id="preview-toggle" class="toggle-btn active" data-view="preview">Preview</button>
+                        <button id="code-toggle" class="toggle-btn" data-view="code">Code</button>
+                    </div>
+                </div>
+            </div>
+            <div class="preview-container">
+                <iframe id="preview-frame" class="active"></iframe>
+                <pre id="code-view" class="code-preview"><code></code></pre>
+            </div>
+        </div>
+    </div>
+    <div id="loading" class="hidden">Generating...</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

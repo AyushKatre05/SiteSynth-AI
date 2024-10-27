@@ -1,0 +1,23 @@
+{
+  "name": "ayush",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.25.1",
+    "@google/generative-ai": "^0.16.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.55.4"
+  }
+}
