@@ -1,7 +1,11 @@
 const express = require('express');
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@google/generative-ai');
+const OpenAI = require('openai');
+const Groq = require('groq-sdk');
 const dotenv = require('dotenv');
 const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 
 dotenv.config();
 
@@ -16,8 +20,10 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-// Initialize Google Generative AI
+// Initialize AI providers
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const googleModels = [
   "gemini-1.5-pro-exp-0801",
@@ -28,10 +34,42 @@ const googleModels = [
   "gemini-1.0-pro"
 ];
 
+const openAIModels = [
+  "gpt-4",
+  "gpt-3.5-turbo",
+  "gpt-4-0125-preview",
+  "gpt-4-turbo-preview"
+];
+
+const groqModels = [
+  "llama-3.2-90b-vision-preview",
+  "llama-3.2-11b-vision-preview",
+  "llava-v1.5-7b-4096-preview",
+  "llama-3.1-405b-reasoning",
+  "llama-3.1-70b-versatile",
+  "llama-3.1-8b-instant",
+  "llama3-groq-70b-8192-tool-use-preview",
+  "llama3-groq-8b-8192-tool-use-preview",
+  "llama3-70b-8192",
+  "llama3-8b-8192",
+  "mixtral-8x7b-32768",
+  "gemma-7b-it",
+  "gemma2-9b-it"
+];
+
 const systemPrompt = "You are an AI assistant specialized in creating websites based on user descriptions. Your task is to generate clean, valid HTML, CSS, and JavaScript code for a website. Respond only with the code needed to create the website, without any explanations or markdown formatting. The code should be ready to be rendered directly in a browser.";
 
-async function generateWebsiteCode(model, prompt, images = []) {
-  return generateGoogleWebsiteCode(model, prompt, images);
+async function generateWebsiteCode(provider, model, prompt, images = []) {
+  switch (provider) {
+    case 'google':
+      return generateGoogleWebsiteCode(model, prompt, images);
+    case 'openai':
+      return generateOpenAIWebsiteCode(model, prompt, images);
+    case 'groq':
+      return generateGroqWebsiteCode(model, prompt, images);
+    default:
+      throw new Error('Invalid provider');
+  }
 }
 
 async function generateGoogleWebsiteCode(model, prompt, images = []) {
@@ -78,7 +116,8 @@ async function generateGoogleWebsiteCode(model, prompt, images = []) {
       },
       {
         role: "model", 
-        parts: [{text: "Understood. I will provide the website code based on user description and images. I'll provide clean, valid HTML, CSS, and JavaScript code without any explanations or markdown formatting. I will make sure <style> and <script> part comes inside the <html>."}]
+        parts: [{text: "Understood. I will provide the website code based on user description and images. I'll provide clean, valid HTML, CSS, and JavaScript code without any explanations or markdown formatting. I will make sure <style> and <script> part comes within inside the <html>."}]
+
       },
       {
         role: "user",
@@ -95,27 +134,102 @@ async function generateGoogleWebsiteCode(model, prompt, images = []) {
   return result.stream;
 }
 
+async function generateOpenAIWebsiteCode(model, prompt, images = []) {
+  const messages = [
+    { role: "system", content: systemPrompt }
+  ];
+
+  if (images && images.length > 0) {
+    const content = [
+      { type: "text", text: prompt },
+      ...images.map(img => ({
+        type: "image_url",
+        image_url: {
+          url: `data:image/jpeg;base64,${img}`,
+          detail: "high"
+        }
+      }))
+    ];
+    messages.push({ role: "user", content });
+  } else {
+    messages.push({ role: "user", content: prompt });
+  }
+
+  const stream = await openai.chat.completions.create({
+    model: model,
+    messages: messages,
+    stream: true,
+  });
+
+  return stream;
+}
+
+async function generateGroqWebsiteCode(model, prompt, images = []) {
+  // Check if it's a vision model
+  const isVisionModel = model.includes('vision') || model.includes('llava');
+  
+  // If it's a vision model and we have images
+  if (isVisionModel && images.length > 0) {
+    // Groq only supports one image per request, so we'll use the first image
+    const image = images[0];
+    
+    const stream = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${image}`
+              }
+            }
+          ]
+        }
+      ],
+      model: model,
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 4096
+    });
+    
+    return stream;
+  } else {
+    // For non-vision models or requests without images, use the original approach
+    const stream = await groq.chat.completions.create({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
+      ],
+      model: model,
+      stream: true,
+    });
+
+    return stream;
+  }
+}
+
 function encodeImageToBase64(buffer) {
   return buffer.toString('base64');
 }
 
 app.post('/generate', upload.array('images', 5), async (req, res) => {
-  const { prompt, model } = req.body;
+  const { prompt, provider, model } = req.body;
   const images = req.files ? req.files.map(file => encodeImageToBase64(file.buffer)) : [];
-  handleWebsiteGeneration(req, res, prompt, model, images);
+  handleWebsiteGeneration(req, res, prompt, provider, model, images);
 });
 
 app.post('/modify', upload.array('images', 5), async (req, res) => {
-  const { prompt, currentCode, model } = req.body;
+  const { prompt, currentCode, provider, model } = req.body;
   const images = req.files ? req.files.map(file => encodeImageToBase64(file.buffer)) : [];
   const modifyPrompt = `Modify the following website code based on this instruction and the provided images: ${prompt}\n\nCurrent code:\n${currentCode}`;
-  handleWebsiteGeneration(req, res, modifyPrompt, model, images);
+  handleWebsiteGeneration(req, res, modifyPrompt, provider, model, images);
 });
-
 const isServerless = process.env.VERCEL == '1';
 
-async function handleWebsiteGeneration(req, res, prompt, model, images = []) {
-  if (isServerless) {
+async function handleWebsiteGeneration(req, res, prompt, provider, model, images = []) {
+  if (isServerless){
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -128,11 +242,21 @@ async function handleWebsiteGeneration(req, res, prompt, model, images = []) {
   }
 
   try {
-    const stream = await generateWebsiteCode(model, prompt, images);
+    const stream = await generateWebsiteCode(provider, model, prompt, images);
 
-    for await (const chunk of stream) {
-      const chunkText = chunk.text();
-      res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+    if (provider === 'google') {
+      for await (const chunk of stream) {
+        const chunkText = chunk.text();
+        res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+      }
+    } else if (provider === 'openai') {
+      for await (const chunk of stream) {
+        res.write(`data: ${JSON.stringify({ text: chunk.choices[0]?.delta?.content || '' })}\n\n`);
+      }
+    } else if (provider === 'groq') {
+      for await (const chunk of stream) {
+        res.write(`data: ${JSON.stringify({ text: chunk.choices[0]?.delta?.content || '' })}\n\n`);
+      }
     }
   } catch (error) {
     console.error('Error:', error);
@@ -146,6 +270,8 @@ async function handleWebsiteGeneration(req, res, prompt, model, images = []) {
 app.get('/models', (req, res) => {
   res.json({
     google: googleModels,
+    openai: openAIModels,
+    groq: groqModels
   });
 });
 

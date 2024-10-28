@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SiteSynth</title>
+    <title>Game Developer Site</title>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <header>
+        <h1>SiteSynth - AI based Game Developer</h1>
+    </header>
     <div class="container">
         <div class="input-section">
             <div class="provider-selection">
-                <h2>SiteSynth - AI site builder</h2>
-                <br>
-                <br>
                 <select id="provider-select">
                     <option value="google">Google</option>
                 </select>
@@ -31,7 +31,7 @@
                                 id="reference-images" 
                                 accept="image/*" 
                                 class="image-upload-input"
-                                data-provider-support="google"
+                                data-provider-support="google,openai"
                                 multiple
                             >
                         </label>
@@ -58,6 +58,9 @@
             <div class="preview-header">
                 <h2>LIVE PREVIEW</h2>
                 <div class="view-controls">
+                    <button id="execute-code" class="execute-btn" title="Execute Code (Ctrl+Enter)">
+                        <span class="launch-icon">▶</span>
+                    </button>
                     <div class="view-toggle">
                         <button id="preview-toggle" class="toggle-btn active" data-view="preview">Preview</button>
                         <button id="code-toggle" class="toggle-btn" data-view="code">Code</button>
