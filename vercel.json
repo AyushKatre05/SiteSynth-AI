@@ -5,7 +5,7 @@
       "src": "app.js",
       "use": "@vercel/node",
       "config": {
-        "maxDuration": 90,
+        "maxDuration": 60,
         "memory": 1024
       }
     },
