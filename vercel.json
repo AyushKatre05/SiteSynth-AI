@@ -1,20 +1,23 @@
 {
-  "version": 2,
+  "version": 1,
   "builds": [
     {
       "src": "app.js",
       "use": "@vercel/node",
       "config": {
-        "maxDuration": 60,
+        "maxDuration": 900,
         "memory": 1024
       }
     },
     {
-      "src": "public/**",
+      "src": "public",
       "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "handle": "filesystem"
+    },
     {
       "src": "/generate",
       "dest": "app.js",
@@ -32,18 +35,15 @@
     },
     {
       "src": "/",
-      "dest": "public/index.html"
+      "dest": "/public/index.html"
     },
     {
       "src": "/script.js",
-      "dest": "public/script.js"
+      "dest": "/public/script.js"
     },
     {
       "src": "/styles.css",
-      "dest": "public/styles.css"
-    },
-    {
-      "handle": "filesystem"
+      "dest": "/public/styles.css"
     },
     {
       "src": "/(.*)",
