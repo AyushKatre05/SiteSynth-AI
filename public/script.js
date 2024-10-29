@@ -92,7 +92,6 @@ async function generateWebsite(prompt, isModify = false) {
 
         currentWebsiteCode = accumulatedHtml;
         
-        // Add new version to history
         versionHistory.push({
             code: accumulatedHtml,
             timestamp: new Date(),
@@ -112,16 +111,12 @@ async function generateWebsite(prompt, isModify = false) {
 }
 
 function cleanGeneratedCode(code) {
-    // Remove code block markers
     code = code.replace(/```\w*\n?/g, '');
     
-    // Remove language tags
     code = code.replace(/<lang="[^"]*">/g, '');
     
-    // Remove any leading/trailing whitespace
     code = code.trim();
     
-    // Ensure style and script tags are properly formatted
     code = code.replace(/<style>\s*{/g, '<style>');
     code = code.replace(/}\s*<\/style>/g, '</style>');
     
@@ -129,15 +124,12 @@ function cleanGeneratedCode(code) {
 }
 
 function updatePreview(html) {
-    // Clean up any markdown code block syntax
     html = html.replace(/```html|```css|```javascript|```/g, '');
 
-    // Extract style and script content
     let style = '';
     let script = '';
     let mainHtml = html;
 
-    // Extract CSS
     const styleMatches = html.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
     if (styleMatches) {
         styleMatches.forEach(match => {
@@ -146,7 +138,6 @@ function updatePreview(html) {
         });
     }
 
-    // Extract JavaScript
     const scriptMatches = html.match(/<script[^>]*>([\s\S]*?)<\/script>/gi);
     if (scriptMatches) {
         scriptMatches.forEach(match => {
@@ -161,7 +152,6 @@ function updatePreview(html) {
     mainHtml = mainHtml.replace(/^\s*<head[^>]*>|<\/head>\s*$/gi, '');
     mainHtml = mainHtml.replace(/^html/i, '');
 
-    // Create a complete HTML document
     const previewContent = `
         <!DOCTYPE html>
         <html lang="en">
@@ -195,21 +185,17 @@ function updatePreview(html) {
         </html>
     `;
 
-    // Update the iframe content
     const previewFrame = document.getElementById('preview-frame');
     previewFrame.srcdoc = previewContent;
 
-    // Add this at the end of the function
     updateCodeView(html);
 }
 
 async function downloadWebsite() {
     const zip = new JSZip();
     
-    // Extract HTML content
     let htmlContent = currentWebsiteCode;
     
-    // Extract and remove style content
     let style = '';
     const styleMatch = htmlContent.match(/<style>([\s\S]*?)<\/style>/i);
     if (styleMatch) {
@@ -217,7 +203,6 @@ async function downloadWebsite() {
         htmlContent = htmlContent.replace(styleMatch[0], '');
     }
     
-    // Extract and remove script content
     let script = '';
     const scriptMatch = htmlContent.match(/<script>([\s\S]*?)<\/script>/i);
     if (scriptMatch) {
@@ -225,15 +210,13 @@ async function downloadWebsite() {
         htmlContent = htmlContent.replace(scriptMatch[0], '');
     }
     
-    // Clean up the HTML content
     htmlContent = htmlContent
         .replace(/^\s*<html[^>]*>|<\/html>\s*$/gi, '')
         .replace(/^\s*<body[^>]*>|<\/body>\s*$/gi, '')
         .replace(/^\s*<head[^>]*>|<\/head>\s*$/gi, '')
         .replace(/^html/i, '')
-        .replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
+        .replace(/^\s+|\s+$/g, ''); 
     
-    // Create the final HTML file with proper DOCTYPE and structure
     const finalHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -250,24 +233,19 @@ async function downloadWebsite() {
     
     zip.file("index.html", finalHtml);
     
-    // Add CSS file
     if (style) {
         zip.file("styles.css", style.trim());
     }
     
-    // Add JS file
     if (script) {
         zip.file("script.js", script.trim());
     }
     
-    // Generate the zip file
     const content = await zip.generateAsync({type: "blob"});
     
-    // Create a filename based on the user's prompt
     const prompt = aiPrompt.value.trim();
     const filename = prompt.split(' ').slice(0, 3).join('-').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'my-website';
     
-    // Save the zip file with the new filename
     saveAs(content, `${filename}.zip`);
 }
 
@@ -283,7 +261,6 @@ function handleImageUpload(event) {
     updateImagePreviews();
     updateImageUploadStatus();
     
-    // Show upload notification
     showNotification(`${files.length} image${files.length > 1 ? 's' : ''} uploaded successfully!`);
 }
 
@@ -350,7 +327,6 @@ providerSelect.addEventListener('change', () => {
       }
 });
 
-// Add a model change event listener to handle Groq vision models
 modelSelect.addEventListener('change', () => {
   const provider = providerSelect.value;
   const model = modelSelect.value;
@@ -369,9 +345,7 @@ modelSelect.addEventListener('change', () => {
   }
 });
 
-// Add event listener for clipboard paste
 document.addEventListener('paste', async (event) => {
-    // Check if image upload is supported for current provider
     const provider = providerSelect.value;
     const model = modelSelect.value;
     const isSupported = provider === 'google' || provider === 'openai' || 
@@ -382,7 +356,6 @@ document.addEventListener('paste', async (event) => {
     const items = event.clipboardData.items;
     let imageFile = null;
 
-    // Look for an image in the clipboard data
     for (let i = 0; i < items.length; i++) {
         if (items[i].type.indexOf('image') !== -1) {
             imageFile = items[i].getAsFile();
@@ -391,53 +364,42 @@ document.addEventListener('paste', async (event) => {
     }
 
     if (imageFile) {
-        // Create a File object with a proper name
         const file = new File([imageFile], `pasted-image-${Date.now()}.png`, {
             type: imageFile.type
         });
 
-        // Handle based on provider
         if (provider === 'groq') {
-            // Groq only supports one image
             uploadedImages = [file];
         } else {
-            // Other providers support multiple images
             uploadedImages.push(file);
         }
 
-        // Update UI
         updateImagePreviews();
         updateImageUploadStatus();
 
-        // Show a notification
         showNotification('Image pasted successfully!');
     }
 });
 
-// Add this helper function for notifications
 function showNotification(message) {
     const notification = document.createElement('div');
     notification.className = 'paste-notification';
     notification.textContent = message;
     document.body.appendChild(notification);
 
-    // Remove notification after animation
     setTimeout(() => {
         notification.remove();
     }, 3000);
 }
 
-// Add these new functions
 function updateVersionNavigation() {
 const previewHeader = document.querySelector('.preview-header');
     
-    // Remove existing navigation if present
     const existingNav = previewHeader.querySelector('.version-navigation');
     if (existingNav) {
         existingNav.remove();
     }
 
-    // Create new navigation element
     const navigation = document.createElement('div');
     navigation.className = 'version-navigation';
     navigation.innerHTML = `
@@ -446,11 +408,9 @@ const previewHeader = document.querySelector('.preview-header');
         <button class="nav-btn next-btn" title="Next Version (→)">→</button>
     `;
     
-    // Insert after h2 but before view-controls
     const viewControls = previewHeader.querySelector('.view-controls');
     previewHeader.insertBefore(navigation, viewControls);
     
-    // Add click handlers
     navigation.querySelector('.prev-btn').addEventListener('click', () => navigateVersion(-1));
     navigation.querySelector('.next-btn').addEventListener('click', () => navigateVersion(1));
     
@@ -465,7 +425,6 @@ function updateVersionInfo() {
         versionInfo.textContent = 'No versions';
     }
     
-    // Update button states
     const prevBtn = document.querySelector('.prev-btn');
     const nextBtn = document.querySelector('.next-btn');
     prevBtn.disabled = currentVersionIndex <= 0;
@@ -482,9 +441,8 @@ function navigateVersion(delta) {
     }
 }
 
-// Add keyboard navigation
 document.addEventListener('keydown', (event) => {
-    if (event.target.tagName === 'TEXTAREA') return; // Ignore when typing in textareas
+    if (event.target.tagName === 'TEXTAREA') return; 
     
     if (event.key === 'ArrowLeft') {
         navigateVersion(-1);
@@ -499,7 +457,6 @@ document.addEventListener('DOMContentLoaded', () => {
     codeElement.spellcheck = false;
 });
 
-// Add this function after updatePreview function
 function updateCodeView(html) {
     const codeElement = codeView.querySelector('code');
     if (!codeElement.contentEditable) {
@@ -508,7 +465,6 @@ function updateCodeView(html) {
     }
     
     
-    // Format the code with syntax highlighting
     const formattedCode = html
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -528,10 +484,9 @@ function executeCode() {
         .replace(/&amp;/g, '&');
     
     updatePreview(code);
-    previewToggle.click(); // Switch to preview mode
+    previewToggle.click();
 }
 
-// Add event listeners for toggle buttons
 previewToggle.addEventListener('click', () => {
     previewToggle.classList.add('active');
     codeToggle.classList.remove('active');
@@ -546,11 +501,9 @@ codeToggle.addEventListener('click', () => {
     previewFrame.classList.remove('active');
 });
 
-// Add execute button functionality
 const executeButton = document.getElementById('execute-code');
 executeButton.addEventListener('click', executeCode);
 
-// Add keyboard shortcut for toggling views
 document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'b') {
         if (previewFrame.classList.contains('active')) {
