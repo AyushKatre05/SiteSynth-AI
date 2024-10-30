@@ -125,48 +125,6 @@ button:hover {
     background-color: #f99a4b;
 }
 
-footer {
-    background-color: #000;
-    color: #ea6e08;
-    font-weight: bold;
-    text-align: center;
-    padding: 10px 0;
-    position: fixed;
-    height: 22px;
-    bottom: 0;
-    width: 100%;
-}
-
-
-footer a {
-    
-    position: relative;
-    transition: transform 0.3s ease;
-}
-
-footer a:hover {
-    transform: scale(1.2);
-}
-
-footer a::before {
-    content: attr(data-content);
-    position: absolute;
-    top: -30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #ea6e08;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-footer a:hover::before {
-    opacity: 1;
-}
-
-/* Image Upload Section Styles */
 .image-upload-section {
     margin-top: 10px;
     margin-bottom: 15px;
@@ -242,7 +200,6 @@ footer a:hover::before {
     text-align: center;
 }
 
-/* Hover effects */
 .image-upload-container:hover {
     border-color: #ea6e08;
     background-color: rgba(0, 255, 255, 0.05);
@@ -252,7 +209,6 @@ footer a:hover::before {
     color: #ea6e08;
 }
 
-/* Disabled state for non-supported providers */
 .image-upload-container.disabled {
     border-color: #666;
     background-color: rgba(102, 102, 102, 0.05);
@@ -264,7 +220,6 @@ footer a:hover::before {
     cursor: not-allowed;
 }
 
-/* Animation for loading state */
 @keyframes pulse {
     0% { opacity: 1; }
     50% { opacity: 0.5; }
@@ -331,7 +286,6 @@ footer a:hover::before {
     font-size: 12px;
 }
 
-/* Version Navigation Styles */
 .version-navigation {
     display: flex;
     align-items: center;
@@ -491,13 +445,12 @@ footer a:hover::before {
 }
 
 .code-preview code {
-    outline: none; /* Remove the outline when focused */
-    caret-color: black; /* Make cursor green to match theme */
+    outline: none; 
+    caret-color: black; 
     display: block;
     width: 100%;
 }
 
-/* Add these styles at the end of the file */
 .paste-notification {
     position: fixed;
     top: 20px;
